@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   DndContext,
@@ -48,24 +48,38 @@ interface PlanMyDayProps {
   open: boolean
   onClose: () => void
   planDate: string
+  initialPlan?: { ticks: TickItem[]; tasks: TaskItem[]; projects: PlanProjectItem[] }
 }
 
 const TASK_DURATIONS = [15, 30]
 const PROJECT_DURATIONS = [60, 90, 120]
 
-export function PlanMyDay({ open, onClose, planDate }: PlanMyDayProps) {
-  const [ticks, setTicks] = useState<TickItem[]>([])
-  const [tasks, setTasks] = useState<TaskItem[]>([])
-  const [projects, setProjects] = useState<PlanProjectItem[]>([])
+export function PlanMyDay({ open, onClose, planDate, initialPlan }: PlanMyDayProps) {
+  const [ticks, setTicks] = useState<TickItem[]>(initialPlan?.ticks ?? [])
+  const [tasks, setTasks] = useState<TaskItem[]>(initialPlan?.tasks ?? [])
+  const [projects, setProjects] = useState<PlanProjectItem[]>(initialPlan?.projects ?? [])
   const [tickInput, setTickInput] = useState("")
   const [taskInput, setTaskInput] = useState("")
   const [taskDuration, setTaskDuration] = useState(30)
   const [projectInput, setProjectInput] = useState("")
   const [projectDuration, setProjectDuration] = useState(60)
+  const [workStart, setWorkStart] = useState("09:00")
   const [step, setStep] = useState<"plan" | "preview">("plan")
   const [saving, setSaving] = useState(false)
   const { setPlanDoneToday } = useUIStore()
   const { setProjectSessions } = useTimerStore()
+
+  // Re-populate when modal opens with an existing plan
+  useEffect(() => {
+    if (open && initialPlan) {
+      setTicks(initialPlan.ticks)
+      setTasks(initialPlan.tasks)
+      setProjects(initialPlan.projects)
+    }
+    if (!open) {
+      setStep("plan")
+    }
+  }, [open, initialPlan])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -170,6 +184,19 @@ export function PlanMyDay({ open, onClose, planDate }: PlanMyDayProps) {
 
             {step === "plan" ? (
               <>
+                {/* Work start time */}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-text-primary shrink-0">
+                    Start work at
+                  </label>
+                  <input
+                    type="time"
+                    value={workStart}
+                    onChange={(e) => setWorkStart(e.target.value)}
+                    className="text-sm px-3 py-1.5 rounded-lg border border-border bg-bg-subtle text-text-primary outline-none focus:border-brand-accent transition-colors tabular-nums"
+                  />
+                </div>
+
                 {/* Three lanes */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Ticks */}
@@ -221,22 +248,30 @@ export function PlanMyDay({ open, onClose, planDate }: PlanMyDayProps) {
                         ))}
                       </SortableContext>
                     </DndContext>
-                    <div className="flex gap-1.5 mt-2">
+                    <div className="flex gap-1 mt-2">
+                      {TASK_DURATIONS.map(d => (
+                        <button
+                          key={d}
+                          onClick={() => setTaskDuration(d)}
+                          className={`text-xs px-2 py-0.5 rounded-md border transition-colors ${
+                            taskDuration === d
+                              ? "border-brand-accent bg-brand-accent/10 text-brand-accent"
+                              : "border-border bg-bg-subtle text-text-muted hover:border-border-strong"
+                          }`}
+                        >
+                          {d}m
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-1.5">
                       <input
                         value={taskInput}
                         onChange={(e) => setTaskInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && addTask()}
                         placeholder="Add a task..."
-                        className="flex-1 text-xs px-3 py-2 rounded-lg border border-border bg-bg-subtle outline-none focus:border-brand-accent text-text-primary placeholder:text-text-muted"
+                        className="flex-1 min-w-0 text-xs px-3 py-2 rounded-lg border border-border bg-bg-subtle outline-none focus:border-brand-accent text-text-primary placeholder:text-text-muted"
                       />
-                      <select
-                        value={taskDuration}
-                        onChange={(e) => setTaskDuration(Number(e.target.value))}
-                        className="text-xs px-2 py-1.5 rounded-lg border border-border bg-bg-subtle text-text-muted outline-none"
-                      >
-                        {TASK_DURATIONS.map(d => <option key={d} value={d}>{d}m</option>)}
-                      </select>
-                      <button onClick={addTask} className="p-2 rounded-lg bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors">
+                      <button onClick={addTask} className="shrink-0 p-2 rounded-lg bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors">
                         <Plus size={12} />
                       </button>
                     </div>
@@ -264,29 +299,35 @@ export function PlanMyDay({ open, onClose, planDate }: PlanMyDayProps) {
                         ))}
                       </SortableContext>
                     </DndContext>
-                    <div className="flex gap-1.5 mt-2">
+                    <div className="flex gap-1 mt-2">
+                      {PROJECT_DURATIONS.map(d => (
+                        <button
+                          key={d}
+                          onClick={() => setProjectDuration(d)}
+                          disabled={projects.length >= 2}
+                          className={`text-xs px-2 py-0.5 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                            projectDuration === d
+                              ? "border-brand-accent bg-brand-accent/10 text-brand-accent"
+                              : "border-border bg-bg-subtle text-text-muted hover:border-border-strong"
+                          }`}
+                        >
+                          {d === 60 ? "1h" : d === 90 ? "1.5h" : "2h"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-1.5">
                       <input
                         value={projectInput}
                         onChange={(e) => setProjectInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && addProject()}
                         placeholder={projects.length >= 2 ? "Two deep work blocks is plenty." : "Add a project..."}
                         disabled={projects.length >= 2}
-                        title={projects.length >= 2 ? "Two deep work blocks is plenty. The rest is bonus." : undefined}
-                        className="flex-1 text-xs px-3 py-2 rounded-lg border border-border bg-bg-subtle outline-none focus:border-brand-accent text-text-primary placeholder:text-text-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 min-w-0 text-xs px-3 py-2 rounded-lg border border-border bg-bg-subtle outline-none focus:border-brand-accent text-text-primary placeholder:text-text-muted disabled:opacity-50 disabled:cursor-not-allowed"
                       />
-                      <select
-                        value={projectDuration}
-                        onChange={(e) => setProjectDuration(Number(e.target.value))}
-                        disabled={projects.length >= 2}
-                        className="text-xs px-2 py-1.5 rounded-lg border border-border bg-bg-subtle text-text-muted outline-none disabled:opacity-50"
-                      >
-                        {PROJECT_DURATIONS.map(d => <option key={d} value={d}>{d / 60}h</option>)}
-                      </select>
                       <button
                         onClick={addProject}
                         disabled={projects.length >= 2}
-                        title={projects.length >= 2 ? "Two deep work blocks is plenty. The rest is bonus." : undefined}
-                        className="p-2 rounded-lg bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="shrink-0 p-2 rounded-lg bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <Plus size={12} />
                       </button>
@@ -328,6 +369,7 @@ export function PlanMyDay({ open, onClose, planDate }: PlanMyDayProps) {
                   tasks={tasks}
                   projects={projects}
                   planDate={planDate}
+                  workStart={workStart}
                   onSent={savePlan}
                 />
 

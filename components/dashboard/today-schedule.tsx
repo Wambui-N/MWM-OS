@@ -6,20 +6,30 @@ import type { DailyPlan, TickItem, TaskItem, PlanProjectItem } from "@/types/dat
 import { cn } from "@/lib/utils"
 import confetti from "canvas-confetti"
 import { toast } from "sonner"
+import { Pencil } from "lucide-react"
 
 interface TodayScheduleProps {
   plan: DailyPlan | null
+  onEdit?: () => void
 }
 
 function fireConfetti() {
   confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ["#E5401A", "#C97B1A", "#2D7A4F"] })
 }
 
-export function TodaySchedule({ plan }: TodayScheduleProps) {
+export function TodaySchedule({ plan, onEdit }: TodayScheduleProps) {
   if (!plan) {
     return (
-      <div className="bg-bg-card rounded-2xl border border-dashed border-border p-6 text-center">
+      <div className="bg-bg-card rounded-2xl border border-dashed border-border p-6 text-center space-y-3">
         <p className="text-sm text-text-muted">No plan for today yet. Head to the morning flow to plan your day.</p>
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="text-sm font-medium text-brand-accent hover:text-brand-accent-hover transition-colors"
+          >
+            + Plan my day
+          </button>
+        )}
       </div>
     )
   }
@@ -51,9 +61,21 @@ export function TodaySchedule({ plan }: TodayScheduleProps) {
     <motion.div variants={fadeUp} className="bg-bg-card rounded-2xl border border-border p-6 space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text-primary">Today&apos;s Schedule</h3>
-        {plan.gcal_synced && (
-          <span className="text-xs text-success font-medium">✓ Synced to GCal</span>
-        )}
+        <div className="flex items-center gap-3">
+          {plan.gcal_synced && (
+            <span className="text-xs text-success font-medium">✓ Synced to GCal</span>
+          )}
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary transition-colors"
+              title="Edit plan"
+            >
+              <Pencil size={12} />
+              Edit
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Ticks */}
@@ -69,7 +91,7 @@ export function TodaySchedule({ plan }: TodayScheduleProps) {
                 type="checkbox"
                 checked={tick.done}
                 onChange={() => toggleItem("tick", tick.id, tick.done)}
-                className="w-4 h-4 rounded border-border accent-[var(--accent)]"
+                className="w-4 h-4 rounded border-border accent-brand-accent"
               />
               <span className={cn("text-sm transition-colors", tick.done ? "line-through text-text-muted" : "text-text-primary")}>
                 {tick.label}
@@ -89,7 +111,7 @@ export function TodaySchedule({ plan }: TodayScheduleProps) {
                 type="checkbox"
                 checked={task.done}
                 onChange={() => toggleItem("task", task.id, task.done)}
-                className="w-4 h-4 rounded border-border accent-[var(--accent)]"
+                className="w-4 h-4 rounded border-border accent-brand-accent"
               />
               <div className="flex-1 min-w-0">
                 <span className={cn("text-sm transition-colors", task.done ? "line-through text-text-muted" : "text-text-primary")}>
@@ -112,7 +134,7 @@ export function TodaySchedule({ plan }: TodayScheduleProps) {
                 type="checkbox"
                 checked={project.done}
                 onChange={() => toggleItem("project", project.id, project.done)}
-                className="w-4 h-4 rounded border-border accent-[var(--accent)]"
+                className="w-4 h-4 rounded border-border accent-brand-accent"
               />
               <div className="flex-1 min-w-0">
                 <span className={cn("text-sm transition-colors", project.done ? "line-through text-text-muted" : "text-text-primary")}>

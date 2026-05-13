@@ -79,12 +79,13 @@ interface SchedulePreviewProps {
   tasks: TaskItem[]
   projects: PlanProjectItem[]
   planDate: string
+  workStart?: string
   onSent: () => void
 }
 
-export function SchedulePreview({ ticks, tasks, projects, planDate, onSent }: SchedulePreviewProps) {
+export function SchedulePreview({ ticks, tasks, projects, planDate, workStart = "09:00", onSent }: SchedulePreviewProps) {
   const [sending, setSending] = useState(false)
-  const blocks = buildSchedule(ticks, tasks, projects)
+  const blocks = buildSchedule(ticks, tasks, projects, workStart)
 
   async function sendToGCal() {
     setSending(true)

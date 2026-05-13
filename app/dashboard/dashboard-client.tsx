@@ -95,6 +95,7 @@ export function DashboardClient({
         open={showPlan}
         onClose={() => setShowPlan(false)}
         planDate={todayISODate()}
+        initialPlan={todayPlan ?? undefined}
       />
 
       <div className="p-6 space-y-8 max-w-6xl mx-auto">
@@ -124,7 +125,7 @@ export function DashboardClient({
         {deepWork ? (
           /* Deep Work: minimal view */
           <div className="space-y-6">
-            <TodaySchedule plan={todayPlan} />
+            <TodaySchedule plan={todayPlan} onEdit={() => setShowPlan(true)} />
           </div>
         ) : (
           <motion.div
@@ -160,7 +161,7 @@ export function DashboardClient({
               />
             </div>
 
-            <TodaySchedule plan={todayPlan} />
+            <TodaySchedule plan={todayPlan} onEdit={() => setShowPlan(true)} />
             <PipelineHealth stageCounts={stageCounts} />
             <StaleLeads leads={staleLeads as Client[]} />
             <ContentWeek posts={weekPosts as ContentPost[]} />
