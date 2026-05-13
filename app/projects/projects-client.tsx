@@ -8,6 +8,7 @@ import { ExternalLink, Plus, CheckSquare, Square } from "lucide-react"
 import { toast } from "sonner"
 import { formatDateShort } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { BossBattleToggle } from "@/components/projects/boss-battle-toggle"
 
 const STATUS_STYLES = {
   active:    { label: "Active",    bg: "bg-brand-accent/10", text: "text-brand-accent" },
@@ -159,7 +160,13 @@ export function ProjectsClient({ initialProjects, clients }: ProjectsClientProps
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  {project.status === "active" && (
+                    <BossBattleToggle
+                      project={project}
+                      onActivated={() => toast.success("Boss Battle active! Check your dashboard.")}
+                    />
+                  )}
                   <span className={cn("text-xs font-medium px-2.5 py-1 rounded-full", style.bg, style.text)}>
                     {style.label}
                   </span>

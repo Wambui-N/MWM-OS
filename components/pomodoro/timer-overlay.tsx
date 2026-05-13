@@ -21,7 +21,9 @@ export function TimerOverlay() {
   const {
     mode, secondsLeft, isRunning, sessionLabel, sessionsToday,
     projectSessions, workMins, breakMins,
+    comboCount, comboMultiplier,
     start, pause, reset, tick, setLabel, setMode, completeSession,
+    incrementCombo, resetCombo,
   } = useTimerStore()
 
   const totalSeconds = (mode === "work" ? workMins : breakMins) * 60
@@ -30,11 +32,19 @@ export function TimerOverlay() {
   const handleSessionComplete = useCallback(async () => {
     completeSession()
     if (mode === "work") {
-      const newTotal = useTimerStore.getState().sessionsToday + 1
-      toast.success("Session complete! Take a break.", { icon: "🍅" })
-      if (newTotal === 4) {
-        toast.success("4 sessions in a day! 🔥 Absolute machine.", { duration: 5000 })
-      }
+      incrementCombo()
+      const multiplier = useTimerStore.getState().comboMultiplier
+      const newCombo = useTimerStore.getState().comboCount
+      const xpBase = 15
+      const xpActual = Math.round(xpBase * multiplier)
+
+      toast.success(
+        newCombo >= 2
+          ? `Session complete! 🔥 ×${multiplier} combo — +${xpActual} XP`
+          : "Session complete! Take a break.",
+        { icon: "🍅" }
+      )
+
       try {
         await fetch("/api/focus/sessions", {
           method: "POST",
@@ -49,13 +59,19 @@ export function TimerOverlay() {
         await fetch("/api/prefs/xp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: newTotal === 4 ? 30 : 0 }),
+          body: JSON.stringify({ amount: xpActual }),
         }).catch(() => {})
       } catch {
         // silent
       }
     }
-  }, [mode, workMins, sessionLabel, completeSession])
+  }, [mode, workMins, sessionLabel, completeSession, incrementCombo])
+
+  // Resetting abandons the combo
+  const handleReset = useCallback(() => {
+    resetCombo()
+    reset()
+  }, [reset, resetCombo])
 
   useEffect(() => {
     if (isRunning) {
@@ -122,6 +138,9 @@ export function TimerOverlay() {
               {isRunning && (
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
               )}
+              {comboCount >= 2 && (
+                <span className="text-xs text-brand-accent font-sans">×{comboMultiplier}</span>
+              )}
               <ChevronUp size={14} className="text-text-muted" />
             </motion.button>
           ) : (
@@ -173,6 +192,18 @@ export function TimerOverlay() {
                 </div>
 
                 <SessionDots completed={projectSessions[0]} total={projectSessions[1]} />
+
+                {/* Combo indicator */}
+                {comboCount >= 2 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="flex items-center gap-1 text-brand-accent text-sm font-medium"
+                  >
+                    🔥 <span>×{comboMultiplier}</span>
+                    <span className="text-xs text-text-muted">combo</span>
+                  </motion.div>
+                )}
               </div>
 
               {/* Mode toggle */}
@@ -196,9 +227,9 @@ export function TimerOverlay() {
               {/* Controls */}
               <div className="flex items-center justify-center gap-3">
                 <button
-                  onClick={reset}
+                  onClick={handleReset}
                   className="p-2 rounded-lg text-text-muted hover:bg-bg-subtle hover:text-text-primary transition-colors"
-                  title="Reset"
+                  title="Reset (clears combo)"
                 >
                   <RotateCcw size={16} />
                 </button>

@@ -19,6 +19,9 @@ interface DayData {
   date: string
   total_mins: number
   session_count: number
+  daily_score?: number | null
+  daily_grade?: string | null
+  is_perfect_day?: boolean
 }
 
 interface Props {
@@ -102,12 +105,15 @@ export function WorkHeatmap({ months = 6, data: externalData }: Props) {
       const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, { weekStartsOn: 1 }) })
       return days.map((day) => {
         const iso = format(day, "yyyy-MM-dd")
-        const data = dayMap.get(iso)
+        const d = dayMap.get(iso)
         return {
           iso,
           day,
-          total_mins: data?.total_mins ?? 0,
-          session_count: data?.session_count ?? 0,
+          total_mins: d?.total_mins ?? 0,
+          session_count: d?.session_count ?? 0,
+          daily_grade: d?.daily_grade ?? null,
+          daily_score: d?.daily_score ?? null,
+          is_perfect_day: d?.is_perfect_day ?? false,
           future: day > today,
         }
       })
@@ -196,24 +202,33 @@ export function WorkHeatmap({ months = 6, data: externalData }: Props) {
                 <div key={wi} className="flex flex-col gap-0.5">
                   {week.map((cell) => {
                     const intensity = cell.future ? -1 : getIntensity(cell.total_mins)
+                    const scoreInfo = cell.daily_grade
+                      ? ` · Grade: ${cell.daily_grade}`
+                      : ""
                     const title =
                       cell.future
                         ? format(cell.day, "EEE, d MMM")
                         : cell.total_mins === 0
                         ? `${format(cell.day, "EEE, d MMM")} — no sessions`
-                        : `${format(cell.day, "EEE, d MMM")}\n${cell.session_count} session${cell.session_count !== 1 ? "s" : ""} · ${cell.total_mins} min focused`
+                        : `${format(cell.day, "EEE, d MMM")}\n${cell.session_count} session${cell.session_count !== 1 ? "s" : ""} · ${cell.total_mins} min focused${scoreInfo}`
+
+                    const isPerfect = !cell.future && cell.is_perfect_day
 
                     return (
                       <motion.div
                         key={cell.iso}
                         whileHover={cell.future ? {} : { scale: 1.5 }}
                         title={title}
-                        className={`w-3 h-3 rounded-sm cursor-default ${
+                        className={`w-3 h-3 rounded-sm cursor-default relative ${
                           cell.future
                             ? "bg-bg-subtle opacity-30"
                             : INTENSITY_CLASSES[intensity as 0 | 1 | 2 | 3 | 4]
                         }`}
-                      />
+                      >
+                        {isPerfect && (
+                          <span className="absolute -top-1 -right-1 text-[8px] leading-none">👑</span>
+                        )}
+                      </motion.div>
                     )
                   })}
                 </div>

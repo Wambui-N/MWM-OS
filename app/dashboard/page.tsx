@@ -2,8 +2,9 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase"
 import { todayISODate, daysBetween, isMonday } from "@/lib/utils"
+import { calculateDayScore } from "@/lib/scoring"
 import { DashboardClient } from "./dashboard-client"
-import type { ClientStage } from "@/types/database"
+import type { ClientStage, DailyPlan, DailyIntention, ContentPost } from "@/types/database"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -83,13 +84,51 @@ export default async function DashboardPage() {
     weekPosts = posts ?? []
     stats.postsThisWeek = weekPosts.length
 
-    // User XP
+    // User XP + prefs
     const { data: prefs } = await supabase
       .from("user_prefs")
-      .select("xp")
+      .select("xp, posting_streak, monthly_revenue_target")
       .eq("user_email", process.env.AUTH_USERNAME!)
       .single()
     userXP = prefs?.xp ?? 0
+
+    // Today's content posts for score calculation
+    const { data: todayPosts } = await supabase
+      .from("content_posts")
+      .select("posted_at, status")
+      .eq("status", "posted")
+    
+    // Compute today's live score
+    const scoreResult = calculateDayScore(
+      todayPlan as DailyPlan | null,
+      todayIntention as DailyIntention | null,
+      (todayPosts ?? []) as ContentPost[]
+    )
+
+    // Revenue from active/completed clients
+    const { data: revenueClients } = await supabase
+      .from("clients")
+      .select("value_ksh, stage")
+      .in("stage", ["active", "completed"])
+    const currentRevenue = (revenueClients ?? []).reduce((s: number, c: any) => s + (c.value_ksh ?? 0), 0)
+
+    return (
+      <DashboardClient
+        stats={stats}
+        stageCounts={stageCounts}
+        staleLeads={staleLeads}
+        todayPlan={todayPlan}
+        weekPosts={weekPosts}
+        userXP={userXP}
+        todayIntention={todayIntention}
+        isMonday={isMonday()}
+        todayScore={scoreResult.score}
+        todayGrade={scoreResult.grade}
+        postingStreak={(prefs as any)?.posting_streak ?? 0}
+        monthlyRevenueTarget={(prefs as any)?.monthly_revenue_target ?? 0}
+        currentRevenue={currentRevenue}
+      />
+    )
   } catch {
     // DB not connected yet — graceful degradation
   }
@@ -104,6 +143,11 @@ export default async function DashboardPage() {
       userXP={userXP}
       todayIntention={todayIntention}
       isMonday={isMonday()}
+      todayScore={null}
+      todayGrade={null}
+      postingStreak={0}
+      monthlyRevenueTarget={0}
+      currentRevenue={0}
     />
   )
 }

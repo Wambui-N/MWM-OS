@@ -5,11 +5,12 @@ import { motion } from "framer-motion"
 import { stagger } from "@/lib/animations"
 import { KanbanBoard } from "@/components/pipeline/kanban-board"
 import { TableView } from "@/components/pipeline/table-view"
+import { WinCard } from "@/components/pipeline/win-card"
 import { ClientDetailSheet } from "@/components/pipeline/client-detail-sheet"
 import { AddLeadSheet } from "@/components/pipeline/add-lead-sheet"
 import { useUIStore } from "@/stores/ui"
 import type { Client } from "@/types/database"
-import { LayoutGrid, List, Plus } from "lucide-react"
+import { LayoutGrid, List, Trophy, Plus } from "lucide-react"
 
 interface PipelineClientProps {
   initialClients: Client[]
@@ -29,6 +30,8 @@ export function PipelineClient({ initialClients }: PipelineClientProps) {
   function handleAdded(client: Client) {
     setClients((prev) => [client, ...prev])
   }
+
+  const wins = clients.filter((c) => c.stage === "completed")
 
   return (
     <motion.div
@@ -59,6 +62,13 @@ export function PipelineClient({ initialClients }: PipelineClientProps) {
             >
               <List size={16} />
             </button>
+            <button
+              onClick={() => setPipelineView("wins")}
+              className={`p-2 transition-colors ${pipelineView === "wins" ? "bg-brand-accent text-white" : "text-text-muted hover:bg-bg-subtle"}`}
+              title="Win wall"
+            >
+              <Trophy size={16} />
+            </button>
           </div>
 
           <button
@@ -71,14 +81,14 @@ export function PipelineClient({ initialClients }: PipelineClientProps) {
         </div>
       </div>
 
-      {/* Board / Table */}
+      {/* Board / Table / Wins */}
       {pipelineView === "kanban" ? (
         <KanbanBoard
           clients={clients}
           onClientClick={setSelectedClient}
           onClientUpdated={handleClientUpdated}
         />
-      ) : (
+      ) : pipelineView === "table" ? (
         <div className="bg-bg-card rounded-2xl border border-border overflow-hidden">
           <TableView
             clients={clients}
@@ -86,6 +96,31 @@ export function PipelineClient({ initialClients }: PipelineClientProps) {
             onClientUpdated={handleClientUpdated}
           />
         </div>
+      ) : (
+        /* Wins wall */
+        wins.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-4xl mb-4">🏆</p>
+            <p className="text-sm text-text-muted">No wins yet. Keep pushing!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🏆</span>
+              <h2
+                className="text-xl font-semibold text-text-primary"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {wins.length} Win{wins.length !== 1 ? "s" : ""}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {wins.map((client) => (
+                <WinCard key={client.id} client={client} />
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       <ClientDetailSheet

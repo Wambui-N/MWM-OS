@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { stagger, fadeUp } from "@/lib/animations"
 import type { ContentPost, ContentStatus } from "@/types/database"
 import { ComposeDrawer } from "@/components/content/compose-drawer"
+import { PostingStreak } from "@/components/content/posting-streak"
 import { Plus } from "lucide-react"
 import { cn, formatDateShort } from "@/lib/utils"
 import { startOfWeek, addDays, format, parseISO, isThisWeek } from "date-fns"
@@ -20,9 +21,12 @@ const POSTING_DAYS = [1, 2, 3, 4]
 
 interface ContentClientProps {
   initialPosts: ContentPost[]
+  postingStreak?: number
+  postingStreakBest?: number
+  freezeCount?: number
 }
 
-export function ContentClient({ initialPosts }: ContentClientProps) {
+export function ContentClient({ initialPosts, postingStreak = 0, postingStreakBest = 0, freezeCount = 1 }: ContentClientProps) {
   const [posts, setPosts] = useState<ContentPost[]>(initialPosts)
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
   const [showCompose, setShowCompose] = useState(false)
@@ -48,8 +52,23 @@ export function ContentClient({ initialPosts }: ContentClientProps) {
 
   const drafts = posts.filter((p) => p.status === "draft" && !p.scheduled_date)
 
+  // Check if this week is missing (not all Mon-Thu posted)
+  const postedThisWeek = weekDays.map((d) => {
+    const key = format(d, "yyyy-MM-dd")
+    return (postsByDate[key] ?? []).some((p) => p.status === "posted")
+  })
+  const isMissingThisWeek = postedThisWeek.some((done) => !done)
+
   return (
     <div className="p-6 space-y-8 max-w-6xl">
+      {/* Posting streak header */}
+      <PostingStreak
+        streak={postingStreak}
+        streakBest={postingStreakBest}
+        freezeCount={freezeCount}
+        isMissingThisWeek={isMissingThisWeek}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-text-muted">{posts.length} posts total</p>

@@ -17,6 +17,7 @@ import { signOut } from "next-auth/react"
 import { useUIStore } from "@/stores/ui"
 import { DarkModeToggle } from "@/components/shared/dark-mode-toggle"
 import { XPBar } from "@/components/shared/xp-bar"
+import { StreakBadge } from "@/components/shared/streak-badge"
 import { sidebarVariants, sidebarTransition } from "@/lib/animations"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
@@ -33,10 +34,12 @@ export function Sidebar() {
   const pathname = usePathname()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
   const [xp, setXp] = useState(0)
+  const [postingStreak, setPostingStreak] = useState(0)
 
   useEffect(() => {
     fetch("/api/prefs").then(r => r.json()).then(({ prefs }) => {
       if (prefs?.xp) setXp(prefs.xp)
+      if (prefs?.posting_streak) setPostingStreak(prefs.posting_streak)
     }).catch(() => {})
   }, [])
 
@@ -95,12 +98,15 @@ export function Sidebar() {
                     animate={{ opacity: 1, width: "auto" }}
                     exit={{ opacity: 0, width: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="overflow-hidden whitespace-nowrap"
+                    className="overflow-hidden whitespace-nowrap flex-1"
                   >
                     {label}
                   </motion.span>
                 )}
               </AnimatePresence>
+              {href === "/content" && (
+                <StreakBadge streak={postingStreak} collapsed={sidebarCollapsed} />
+              )}
             </Link>
           )
         })}

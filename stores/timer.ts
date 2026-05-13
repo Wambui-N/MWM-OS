@@ -10,6 +10,8 @@ interface TimerStore {
   projectSessions: [number, number]  // [completed, total]
   workMins: number
   breakMins: number
+  comboCount: number
+  comboMultiplier: number
   start: () => void
   pause: () => void
   reset: () => void
@@ -20,6 +22,8 @@ interface TimerStore {
   completeSession: () => void
   setWorkMins: (mins: number) => void
   setBreakMins: (mins: number) => void
+  incrementCombo: () => void
+  resetCombo: () => void
 }
 
 export const useTimerStore = create<TimerStore>()(
@@ -33,6 +37,8 @@ export const useTimerStore = create<TimerStore>()(
       projectSessions: [0, 0],
       workMins: 25,
       breakMins: 5,
+      comboCount: 0,
+      comboMultiplier: 1,
 
       start: () => set({ isRunning: true }),
       pause: () => set({ isRunning: false }),
@@ -82,6 +88,13 @@ export const useTimerStore = create<TimerStore>()(
         set({ breakMins: mins })
         if (mode === "break") set({ secondsLeft: mins * 60 })
       },
+      incrementCombo: () =>
+        set((state) => {
+          const newCount = state.comboCount + 1
+          const multiplier = newCount >= 4 ? 2 : newCount >= 2 ? 1.5 : 1
+          return { comboCount: newCount, comboMultiplier: multiplier }
+        }),
+      resetCombo: () => set({ comboCount: 0, comboMultiplier: 1 }),
     }),
     {
       name: "mwm-timer",

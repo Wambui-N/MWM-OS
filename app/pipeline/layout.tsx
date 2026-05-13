@@ -1,9 +1,10 @@
-﻿import { redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { TimerOverlay } from "@/components/pomodoro/timer-overlay"
 import { MusicWidget } from "@/components/music/music-widget"
+import { RewardMoment } from "@/components/rewards/reward-moment"
 
 export default async function PipelineLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -17,6 +18,7 @@ export default async function PipelineLayout({ children }: { children: React.Rea
       </div>
       <TimerOverlay />
       <MusicWidget />
+      <RewardMoment />
     </div>
   )
 }

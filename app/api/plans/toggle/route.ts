@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { createAdminClient } from "@/lib/supabase"
+import { awardXP, checkDayMultiplier } from "@/lib/xp"
 import type { DailyPlan, TickItem, TaskItem, PlanProjectItem } from "@/types/database"
 
 export async function POST(req: Request) {
@@ -38,25 +39,23 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Award XP for completing tasks
-  if (type === "task" && done) {
-    const allDone = (updated as DailyPlan).tasks.every((t: TaskItem) => t.done)
-    if (allDone) {
-      const { data: prefs } = await supabase.from("user_prefs").select("xp").eq("user_email", process.env.AUTH_USERNAME!).single()
-      if (prefs) {
-        await supabase.from("user_prefs").update({ xp: (prefs.xp ?? 0) + 50 }).eq("user_email", process.env.AUTH_USERNAME!)
-      }
-    }
-  }
+  const updatedPlan = updated as DailyPlan
+
+  // XP for completing all ticks
   if (type === "tick" && done) {
-    const allDone = (updated as DailyPlan).ticks.every((t: TickItem) => t.done)
+    const allDone = updatedPlan.ticks.every((t: TickItem) => t.done)
+    if (allDone) await awardXP(15)
+  }
+
+  // XP for completing all tasks
+  if (type === "task" && done) {
+    const allDone = updatedPlan.tasks.every((t: TaskItem) => t.done)
     if (allDone) {
-      const { data: prefs } = await supabase.from("user_prefs").select("xp").eq("user_email", process.env.AUTH_USERNAME!).single()
-      if (prefs) {
-        await supabase.from("user_prefs").update({ xp: (prefs.xp ?? 0) + 15 }).eq("user_email", process.env.AUTH_USERNAME!)
-      }
+      await awardXP(50)
+      // Also check if this triggers the full-day multiplier bonus
+      await checkDayMultiplier(updatedPlan)
     }
   }
 
-  return NextResponse.json({ plan: updated })
+  return NextResponse.json({ plan: updatedPlan })
 }

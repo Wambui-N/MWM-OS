@@ -4,6 +4,8 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { TimerOverlay } from "@/components/pomodoro/timer-overlay"
 import { MusicWidget } from "@/components/music/music-widget"
+import { RewardMoment } from "@/components/rewards/reward-moment"
+import { MomentumBar } from "@/components/dashboard/momentum-bar"
 
 export default async function AppLayout({
   children,
@@ -18,12 +20,14 @@ export default async function AppLayout({
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar />
+        <MomentumBar />
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
       <TimerOverlay />
       <MusicWidget />
+      <RewardMoment />
     </div>
   )
 }

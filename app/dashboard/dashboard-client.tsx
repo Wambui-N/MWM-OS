@@ -10,11 +10,18 @@ import { PipelineHealth } from "@/components/dashboard/pipeline-health"
 import { StaleLeads } from "@/components/dashboard/stale-leads"
 import { ContentWeek } from "@/components/dashboard/content-week"
 import { WorkHeatmap } from "@/components/dashboard/work-heatmap"
+import { RevenueGoal } from "@/components/dashboard/revenue-goal"
+import { HabitTracker } from "@/components/dashboard/habit-tracker"
+import { BossBattleCard } from "@/components/dashboard/boss-battle-card"
+import { UnclaimedBanner } from "@/components/rewards/unclaimed-banner"
+import { WeeklyChallenge } from "@/components/dashboard/weekly-challenge"
+import { WeeklyReviewNudge } from "@/components/dashboard/weekly-review-nudge"
+import { ReviewModal } from "@/components/reviews/review-modal"
 import { IntentionModal } from "@/components/morning/intention-modal"
 import { PlanMyDay } from "@/components/morning/plan-my-day"
 import { useUIStore } from "@/stores/ui"
 import { todayISODate } from "@/lib/utils"
-import type { ClientStage, DailyPlan, ContentPost, Client } from "@/types/database"
+import type { ClientStage, DailyPlan, ContentPost, Client, DayGrade } from "@/types/database"
 
 interface DashboardClientProps {
   stats: {
@@ -30,6 +37,11 @@ interface DashboardClientProps {
   userXP: number
   todayIntention: any
   isMonday: boolean
+  todayScore: number | null
+  todayGrade: DayGrade | null
+  postingStreak: number
+  monthlyRevenueTarget: number
+  currentRevenue: number
 }
 
 export function DashboardClient({
@@ -40,6 +52,10 @@ export function DashboardClient({
   weekPosts,
   todayIntention,
   isMonday,
+  todayScore,
+  todayGrade,
+  monthlyRevenueTarget,
+  currentRevenue,
 }: DashboardClientProps) {
   const { intentionDoneToday, planDoneToday, setIntentionDoneToday, setPlanDoneToday, deepWork } = useUIStore()
   const [showIntention, setShowIntention] = useState(false)
@@ -47,7 +63,6 @@ export function DashboardClient({
   const [showMondayBanner, setShowMondayBanner] = useState(false)
 
   useEffect(() => {
-    // Reset daily flags at midnight
     const lastDateKey = "mwm-last-date"
     const stored = localStorage.getItem(lastDateKey)
     const today = todayISODate()
@@ -59,7 +74,6 @@ export function DashboardClient({
   }, [setIntentionDoneToday, setPlanDoneToday])
 
   useEffect(() => {
-    // Show intention modal if not done today
     if (!intentionDoneToday && !todayIntention) {
       const t = setTimeout(() => setShowIntention(true), 400)
       return () => clearTimeout(t)
@@ -67,7 +81,6 @@ export function DashboardClient({
   }, [intentionDoneToday, todayIntention])
 
   useEffect(() => {
-    // Show plan-my-day if intention done but no plan yet
     if ((intentionDoneToday || todayIntention) && !planDoneToday && !todayPlan) {
       const t = setTimeout(() => setShowPlan(true), 200)
       return () => clearTimeout(t)
@@ -84,6 +97,8 @@ export function DashboardClient({
 
   return (
     <>
+      <ReviewModal />
+
       <IntentionModal
         open={showIntention}
         onClose={() => {
@@ -124,7 +139,6 @@ export function DashboardClient({
         )}
 
         {deepWork ? (
-          /* Deep Work: minimal view */
           <div className="space-y-6">
             <TodaySchedule plan={todayPlan} onEdit={() => setShowPlan(true)} />
           </div>
@@ -135,10 +149,10 @@ export function DashboardClient({
             animate="show"
             className="space-y-8"
           >
-            <Greeting />
+            <Greeting score={todayScore} grade={todayGrade} />
 
             {/* Stat cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
                 label="Pipeline Value"
                 value={stats.pipelineValue}
@@ -160,12 +174,18 @@ export function DashboardClient({
                 value={stats.postsThisWeek}
                 description="Scheduled"
               />
+              <RevenueGoal target={monthlyRevenueTarget} current={currentRevenue} />
             </div>
 
+            <UnclaimedBanner />
+            <BossBattleCard />
+            <HabitTracker />
             <WorkHeatmap months={6} />
             <TodaySchedule plan={todayPlan} onEdit={() => setShowPlan(true)} />
             <PipelineHealth stageCounts={stageCounts} />
             <StaleLeads leads={staleLeads as Client[]} />
+            <WeeklyChallenge />
+            <WeeklyReviewNudge />
             <ContentWeek posts={weekPosts as ContentPost[]} />
           </motion.div>
         )}

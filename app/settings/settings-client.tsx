@@ -4,6 +4,8 @@ import { useState } from "react"
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts"
 import { getLevelInfo } from "@/components/shared/xp-bar"
 import { WorkHeatmap } from "@/components/dashboard/work-heatmap"
+import { HabitManager } from "@/components/settings/habit-manager"
+import { RewardManager } from "@/components/rewards/reward-manager"
 import type { UserPrefs } from "@/types/database"
 import { toast } from "sonner"
 
@@ -16,6 +18,7 @@ export function SettingsClient({ prefs, energyData }: SettingsClientProps) {
   const [workMins, setWorkMins] = useState(prefs?.pomodoro_work_mins ?? 25)
   const [breakMins, setBreakMins] = useState(prefs?.pomodoro_break_mins ?? 5)
   const [workStart, setWorkStart] = useState(prefs?.work_start_time ?? "09:00")
+  const [revenueTarget, setRevenueTarget] = useState((prefs as any)?.monthly_revenue_target ?? 0)
   const [saving, setSaving] = useState(false)
 
   const xp = prefs?.xp ?? 0
@@ -31,6 +34,7 @@ export function SettingsClient({ prefs, energyData }: SettingsClientProps) {
           pomodoro_work_mins: workMins,
           pomodoro_break_mins: breakMins,
           work_start_time: workStart,
+          monthly_revenue_target: revenueTarget,
         }),
       })
       if (!res.ok) throw new Error()
@@ -115,6 +119,17 @@ export function SettingsClient({ prefs, energyData }: SettingsClientProps) {
               />
             </div>
           </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-text-muted">Monthly Revenue Target (KSh)</label>
+            <input
+              type="number"
+              min={0}
+              step={1000}
+              value={revenueTarget}
+              onChange={(e) => setRevenueTarget(Number(e.target.value))}
+              className="w-full px-3 py-2.5 rounded-lg border border-border bg-bg-subtle text-sm text-text-primary outline-none focus:border-brand-accent"
+            />
+          </div>
           <button
             onClick={savePrefs}
             disabled={saving}
@@ -122,6 +137,33 @@ export function SettingsClient({ prefs, energyData }: SettingsClientProps) {
           >
             {saving ? "Saving..." : "Save Settings"}
           </button>
+        </div>
+      </section>
+
+      {/* Habits */}
+      <section className="space-y-4">
+        <h2
+          className="text-2xl font-semibold text-text-primary"
+          style={{ fontFamily: "var(--font-display)" }}
+          id="habits"
+        >
+          Daily Habits
+        </h2>
+        <div className="bg-bg-card rounded-2xl border border-border p-6">
+          <HabitManager />
+        </div>
+      </section>
+
+      {/* Rewards */}
+      <section className="space-y-4" id="rewards">
+        <h2
+          className="text-2xl font-semibold text-text-primary"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Custom Rewards
+        </h2>
+        <div className="bg-bg-card rounded-2xl border border-border p-6">
+          <RewardManager />
         </div>
       </section>
 
