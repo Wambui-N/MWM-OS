@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts"
 import { getLevelInfo } from "@/components/shared/xp-bar"
+import { WorkHeatmap } from "@/components/dashboard/work-heatmap"
 import type { UserPrefs } from "@/types/database"
 import { toast } from "sonner"
 
@@ -122,6 +123,17 @@ export function SettingsClient({ prefs, energyData }: SettingsClientProps) {
             {saving ? "Saving..." : "Save Settings"}
           </button>
         </div>
+      </section>
+
+      {/* Focus heatmap */}
+      <section className="space-y-4">
+        <h2
+          className="text-2xl font-semibold text-text-primary"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Focus History
+        </h2>
+        <WorkHeatmap months={12} />
       </section>
 
       {/* Energy sparkline */}

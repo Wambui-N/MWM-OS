@@ -1,8 +1,9 @@
-import { redirect } from "next/navigation"
+﻿import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { TimerOverlay } from "@/components/pomodoro/timer-overlay"
+import { MusicWidget } from "@/components/music/music-widget"
 
 export default async function ContentLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -15,6 +16,7 @@ export default async function ContentLayout({ children }: { children: React.Reac
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
       <TimerOverlay />
+      <MusicWidget />
     </div>
   )
 }

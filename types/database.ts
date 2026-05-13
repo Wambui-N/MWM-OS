@@ -1,6 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type ServiceType = "automation" | "web" | "both"
+export type MusicSource = "spotify" | "youtube"
 export type ClientStage =
   | "lead"
   | "discovery"
@@ -101,6 +102,17 @@ export interface PomodoroSession {
   created_at: string
 }
 
+export interface SavedStation {
+  id: string
+  name: string
+  source: MusicSource
+  url: string
+  thumbnail_url: string | null
+  is_default: boolean
+  sort_order: number
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -111,6 +123,7 @@ export interface Database {
       daily_intentions: { Row: DailyIntention; Insert: Partial<DailyIntention>; Update: Partial<DailyIntention> }
       content_posts: { Row: ContentPost; Insert: Partial<ContentPost>; Update: Partial<ContentPost> }
       pomodoro_sessions: { Row: PomodoroSession; Insert: Partial<PomodoroSession>; Update: Partial<PomodoroSession> }
+      saved_stations: { Row: SavedStation; Insert: Partial<SavedStation>; Update: Partial<SavedStation> }
     }
   }
 }

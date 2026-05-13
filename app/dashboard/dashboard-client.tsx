@@ -9,6 +9,7 @@ import { TodaySchedule } from "@/components/dashboard/today-schedule"
 import { PipelineHealth } from "@/components/dashboard/pipeline-health"
 import { StaleLeads } from "@/components/dashboard/stale-leads"
 import { ContentWeek } from "@/components/dashboard/content-week"
+import { WorkHeatmap } from "@/components/dashboard/work-heatmap"
 import { IntentionModal } from "@/components/morning/intention-modal"
 import { PlanMyDay } from "@/components/morning/plan-my-day"
 import { useUIStore } from "@/stores/ui"
@@ -161,6 +162,7 @@ export function DashboardClient({
               />
             </div>
 
+            <WorkHeatmap months={6} />
             <TodaySchedule plan={todayPlan} onEdit={() => setShowPlan(true)} />
             <PipelineHealth stageCounts={stageCounts} />
             <StaleLeads leads={staleLeads as Client[]} />

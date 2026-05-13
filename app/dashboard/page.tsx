@@ -87,7 +87,7 @@ export default async function DashboardPage() {
     const { data: prefs } = await supabase
       .from("user_prefs")
       .select("xp")
-      .eq("user_email", process.env.ALLOWED_EMAIL!)
+      .eq("user_email", process.env.AUTH_USERNAME!)
       .single()
     userXP = prefs?.xp ?? 0
   } catch {

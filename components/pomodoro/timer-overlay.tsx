@@ -7,7 +7,6 @@ import { useTimerStore } from "@/stores/timer"
 import { ProgressRing } from "./progress-ring"
 import { SessionDots } from "./session-dots"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 
 function formatTime(seconds: number) {
@@ -37,20 +36,23 @@ export function TimerOverlay() {
         toast.success("4 sessions in a day! 🔥 Absolute machine.", { duration: 5000 })
       }
       try {
-        await supabase.from("pomodoro_sessions").insert({
-          session_date: new Date().toISOString().split("T")[0],
-          label: sessionLabel || null,
-          duration_mins: workMins,
-          completed: true,
+        await fetch("/api/focus/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session_date: new Date().toISOString().split("T")[0],
+            label: sessionLabel || null,
+            duration_mins: workMins,
+            completed: true,
+          }),
         })
-        // Award XP
         await fetch("/api/prefs/xp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount: newTotal === 4 ? 30 : 0 }),
         }).catch(() => {})
-      } catch (e) {
-        // silent — no auth configured yet
+      } catch {
+        // silent
       }
     }
   }, [mode, workMins, sessionLabel, completeSession])

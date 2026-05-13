@@ -15,7 +15,7 @@ export default async function SettingsPage() {
     const { data: prefsData } = await supabase
       .from("user_prefs")
       .select("*")
-      .eq("user_email", process.env.ALLOWED_EMAIL!)
+      .eq("user_email", process.env.AUTH_USERNAME!)
       .single()
     prefs = prefsData
 

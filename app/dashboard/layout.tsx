@@ -1,8 +1,9 @@
-import { redirect } from "next/navigation"
+﻿import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { TimerOverlay } from "@/components/pomodoro/timer-overlay"
+import { MusicWidget } from "@/components/music/music-widget"
 
 export default async function AppLayout({
   children,
@@ -22,6 +23,7 @@ export default async function AppLayout({
         </main>
       </div>
       <TimerOverlay />
+      <MusicWidget />
     </div>
   )
 }
